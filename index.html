@@ -1,16 +1,112 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>PDF Gratis - Unir PDF</title>
+  <meta charset="UTF-8">
+  <title>PDF Gratis - Unir PDF Online</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 40px;
+    }
+
+    h2 {
+      color: #555;
+      margin-bottom: 30px;
+    }
+
+    .box {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 400px;
+      margin: auto;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    input {
+      margin: 15px 0;
+    }
+
+    button {
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #e60000;
+    }
+
+    .status {
+      margin-top: 15px;
+      color: green;
+    }
+  </style>
 </head>
-<body style="font-family: Arial; text-align: center; padding: 50px;">
+
+<body>
+
   <h1>PDF GRATIS</h1>
   <h2>Unir PDFs fácilmente</h2>
 
-  <input type="file" multiple accept="application/pdf"><br><br>
+  <div class="box">
+    <input id="pdfInput" type="file" multiple accept="application/pdf"><br>
 
-  <button style="padding: 10px 20px;">Unir PDF</button>
+    <button onclick="mergePDFs()">Unir PDF</button>
+
+    <p class="status" id="status"></p>
+  </div>
 
   <p>Herramienta gratuita para unir archivos PDF online.</p>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
+  <script>
+    async function mergePDFs() {
+      const input = document.getElementById('pdfInput');
+      const status = document.getElementById('status');
+      const files = input.files;
+
+      if (files.length < 2) {
+        alert("Selecciona al menos 2 PDFs");
+        return;
+      }
+
+      status.innerText = "Procesando PDFs...";
+
+      const mergedPdf = await PDFLib.PDFDocument.create();
+
+      for (let file of files) {
+        const bytes = await file.arrayBuffer();
+        const pdf = await PDFLib.PDFDocument.load(bytes);
+        const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        pages.forEach(page => mergedPdf.addPage(page));
+      }
+
+      const mergedBytes = await mergedPdf.save();
+
+      const blob = new Blob([mergedBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "pdf-unido.pdf";
+      a.click();
+
+      status.innerText = "✅ PDF unido correctamente";
+    }
+  </script>
+
 </body>
 </html>
