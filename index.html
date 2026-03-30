@@ -1,175 +1,870 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>PDF Tools Online Gratis</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Gratis Online | Unir, dividir, convertir y optimizar PDF</title>
+  <meta name="description" content="Herramientas PDF gratis online: unir PDF, dividir PDF, eliminar páginas, rotar, convertir JPG a PDF, extraer texto y optimizar archivos. Todo en una sola página." />
+  <meta name="keywords" content="pdf gratis, unir pdf, dividir pdf, jpg a pdf, optimizar pdf, extraer texto pdf, rotar pdf, eliminar paginas pdf" />
+  <meta name="robots" content="index, follow" />
 
-<style>
-body {
-  font-family: Arial;
-  background: #f5f7fa;
-  text-align: center;
-  padding: 30px;
-}
-
-h1 {
-  font-size: 35px;
-}
-
-.container {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-top: 30px;
-}
-
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  width: 300px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-button {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  margin-top: 10px;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-button:hover {
-  background: #0056b3;
-}
-
-.status {
-  margin-top: 10px;
-  color: green;
-}
-</style>
-</head>
-
-<body>
-
-<h1>PDF Tools Online Gratis</h1>
-<p>Unir, dividir y trabajar con PDF fácilmente</p>
-
-<div class="container">
-
-<!-- UNIR PDF -->
-<div class="card">
-  <h3>Unir PDF</h3>
-  <input id="mergeInput" type="file" multiple accept="application/pdf"><br>
-  <button onclick="mergePDFs()">Unir PDF</button>
-  <p class="status" id="mergeStatus"></p>
-</div>
-
-<!-- DIVIDIR PDF -->
-<div class="card">
-  <h3>Dividir PDF</h3>
-  <input id="splitInput" type="file" accept="application/pdf"><br>
-  <input id="pages" placeholder="Ej: 1-2,4"><br>
-  <button onclick="splitPDF()">Dividir PDF</button>
-  <p class="status" id="splitStatus"></p>
-</div>
-
-</div>
-
-<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-
-<script>
-
-// UNIR PDF
-async function mergePDFs() {
-  const files = document.getElementById("mergeInput").files;
-  const status = document.getElementById("mergeStatus");
-
-  if (files.length < 2) {
-    alert("Selecciona mínimo 2 PDFs");
-    return;
-  }
-
-  status.innerText = "Procesando...";
-
-  const mergedPdf = await PDFLib.PDFDocument.create();
-
-  for (let file of files) {
-    const bytes = await file.arrayBuffer();
-    const pdf = await PDFLib.PDFDocument.load(bytes);
-    const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-    pages.forEach(p => mergedPdf.addPage(p));
-  }
-
-  const mergedBytes = await mergedPdf.save();
-
-  downloadFile(mergedBytes, "pdf-unido.pdf");
-  status.innerText = "✅ PDF unido";
-}
-
-
-// DIVIDIR PDF
-async function splitPDF() {
-  const file = document.getElementById("splitInput").files[0];
-  const pagesInput = document.getElementById("pages").value;
-  const status = document.getElementById("splitStatus");
-
-  if (!file || !pagesInput) {
-    alert("Sube PDF y escribe páginas");
-    return;
-  }
-
-  status.innerText = "Procesando...";
-
-  const bytes = await file.arrayBuffer();
-  const pdf = await PDFLib.PDFDocument.load(bytes);
-  const newPdf = await PDFLib.PDFDocument.create();
-
-  let pages = parsePages(pagesInput);
-
-  const copied = await newPdf.copyPages(pdf, pages);
-  copied.forEach(p => newPdf.addPage(p));
-
-  const newBytes = await newPdf.save();
-
-  downloadFile(newBytes, "pdf-dividido.pdf");
-  status.innerText = "✅ PDF dividido";
-}
-
-
-// PARSEAR PAGINAS
-function parsePages(input) {
-  let result = [];
-  let parts = input.split(",");
-
-  parts.forEach(part => {
-    if (part.includes("-")) {
-      let [start, end] = part.split("-").map(Number);
-      for (let i = start; i <= end; i++) result.push(i - 1);
-    } else {
-      result.push(Number(part) - 1);
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --text:#18212f;
+      --muted:#5b6472;
+      --primary:#e53935;
+      --primary-dark:#c62828;
+      --line:#e8edf4;
+      --success:#0f9d58;
+      --shadow:0 12px 30px rgba(16,24,40,.08);
+      --radius:20px;
     }
-  });
 
-  return result;
-}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
 
+    .wrap{
+      width:min(1180px, calc(100% - 32px));
+      margin:auto;
+    }
 
-// DESCARGAR
-function downloadFile(bytes, name) {
-  const blob = new Blob([bytes], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
+    header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:rgba(246,248,251,.92);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--line);
+    }
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-}
+    .nav{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:14px 0;
+    }
 
-</script>
+    .brand{
+      font-size:1.25rem;
+      font-weight:700;
+      color:var(--primary);
+      text-decoration:none;
+    }
 
+    .nav-links{
+      display:flex;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .nav-links a{
+      color:var(--muted);
+      text-decoration:none;
+      font-size:.95rem;
+    }
+
+    .hero{
+      padding:54px 0 26px;
+      text-align:center;
+    }
+
+    .hero h1{
+      font-size:clamp(2rem, 4vw, 3.2rem);
+      margin:0 0 14px;
+      line-height:1.1;
+    }
+
+    .hero p{
+      max-width:800px;
+      margin:0 auto;
+      color:var(--muted);
+      font-size:1.08rem;
+      line-height:1.6;
+    }
+
+    .hero-badges{
+      margin-top:20px;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .badge{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:10px 14px;
+      font-size:.9rem;
+      box-shadow:var(--shadow);
+    }
+
+    .section{
+      padding:22px 0;
+    }
+
+    .section h2{
+      font-size:1.6rem;
+      margin:0 0 14px;
+    }
+
+    .section .sub{
+      color:var(--muted);
+      margin-bottom:22px;
+    }
+
+    .tools-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(280px,1fr));
+      gap:18px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:20px;
+    }
+
+    .card h3{
+      margin:0 0 8px;
+      font-size:1.18rem;
+    }
+
+    .card p{
+      color:var(--muted);
+      margin:0 0 14px;
+      line-height:1.5;
+      font-size:.95rem;
+    }
+
+    .dropzone{
+      border:2px dashed #d8dee8;
+      border-radius:16px;
+      padding:18px;
+      text-align:center;
+      background:#fbfcfe;
+      transition:.2s ease;
+      margin-bottom:12px;
+    }
+
+    .dropzone.dragover{
+      border-color:var(--primary);
+      background:#fff4f4;
+    }
+
+    .dropzone input{
+      width:100%;
+      margin-top:8px;
+    }
+
+    .input, .textarea, .select{
+      width:100%;
+      padding:12px 13px;
+      border:1px solid #dbe3ee;
+      border-radius:12px;
+      font-size:.95rem;
+      margin-top:10px;
+      outline:none;
+      background:#fff;
+    }
+
+    .textarea{
+      min-height:92px;
+      resize:vertical;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    button{
+      border:none;
+      border-radius:12px;
+      padding:12px 16px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:.95rem;
+      transition:.2s ease;
+    }
+
+    .btn-primary{
+      background:var(--primary);
+      color:#fff;
+    }
+
+    .btn-primary:hover{background:var(--primary-dark)}
+    .btn-secondary{
+      background:#eef3f9;
+      color:#273142;
+    }
+
+    .btn-secondary:hover{background:#e4ebf4}
+
+    .status{
+      margin-top:12px;
+      font-size:.92rem;
+      color:var(--muted);
+      min-height:20px;
+    }
+
+    .status.success{color:var(--success)}
+    .status.error{color:#b3261e}
+
+    .file-list{
+      margin-top:10px;
+      padding-left:18px;
+      color:var(--muted);
+      font-size:.92rem;
+      text-align:left;
+    }
+
+    .split{
+      display:grid;
+      grid-template-columns:1.3fr .9fr;
+      gap:18px;
+    }
+
+    .info-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:16px;
+    }
+
+    .info-box{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+
+    .faq details{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px 18px;
+      box-shadow:var(--shadow);
+    }
+
+    .faq{
+      display:grid;
+      gap:12px;
+    }
+
+    footer{
+      margin-top:30px;
+      border-top:1px solid var(--line);
+      padding:28px 0 40px;
+      color:var(--muted);
+    }
+
+    .footer-grid{
+      display:grid;
+      grid-template-columns:1.2fr .8fr .8fr;
+      gap:16px;
+    }
+
+    .mini{
+      font-size:.9rem;
+      line-height:1.6;
+    }
+
+    .tool-note{
+      background:#fff8e1;
+      color:#775c00;
+      border:1px solid #f4df95;
+      border-radius:14px;
+      padding:12px 14px;
+      font-size:.9rem;
+      margin-top:10px;
+    }
+
+    @media (max-width:900px){
+      .split, .footer-grid{grid-template-columns:1fr}
+      .nav{align-items:flex-start; flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <a href="#" class="brand">PDF Gratis Online</a>
+      <nav class="nav-links">
+        <a href="#herramientas">Herramientas</a>
+        <a href="#ventajas">Ventajas</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <h1>Herramientas PDF gratis en una sola página</h1>
+      <p>
+        Une, divide, elimina páginas, rota, convierte imágenes a PDF, extrae texto y optimiza documentos
+        sin salir de la misma web. Todo se procesa en tu navegador.
+      </p>
+
+      <div class="hero-badges">
+        <div class="badge">Sin registro</div>
+        <div class="badge">Procesamiento local</div>
+        <div class="badge">Compatible con móvil y PC</div>
+        <div class="badge">Una sola página</div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="herramientas">
+      <h2>Herramientas</h2>
+      <div class="sub">Sube tus archivos y descarga el resultado al instante.</div>
+
+      <div class="tools-grid">
+
+        <div class="card">
+          <h3>Unir PDF</h3>
+          <p>Junta varios archivos PDF en un solo documento.</p>
+          <div class="dropzone" data-input="mergeInput">
+            Arrastra tus PDFs aquí o selecciónalos
+            <input id="mergeInput" type="file" multiple accept="application/pdf">
+          </div>
+          <ul class="file-list" id="mergeList"></ul>
+          <div class="actions">
+            <button class="btn-primary" onclick="mergePDFs()">Unir PDF</button>
+            <button class="btn-secondary" onclick="clearInput('mergeInput','mergeList','mergeStatus')">Limpiar</button>
+          </div>
+          <div class="status" id="mergeStatus"></div>
+        </div>
+
+        <div class="card">
+          <h3>Extraer páginas</h3>
+          <p>Selecciona páginas específicas. Ejemplo: 1-3,5,8</p>
+          <div class="dropzone" data-input="extractInput">
+            Sube un PDF
+            <input id="extractInput" type="file" accept="application/pdf">
+          </div>
+          <input class="input" id="extractPages" placeholder="Ejemplo: 1-3,5,8">
+          <div class="actions">
+            <button class="btn-primary" onclick="extractPagesPdf()">Extraer</button>
+            <button class="btn-secondary" onclick="clearInput('extractInput',null,'extractStatus'); clearField('extractPages')">Limpiar</button>
+          </div>
+          <div class="status" id="extractStatus"></div>
+        </div>
+
+        <div class="card">
+          <h3>Eliminar páginas</h3>
+          <p>Quita páginas concretas del PDF. Ejemplo: 2,4-6</p>
+          <div class="dropzone" data-input="deleteInput">
+            Sube un PDF
+            <input id="deleteInput" type="file" accept="application/pdf">
+          </div>
+          <input class="input" id="deletePages" placeholder="Ejemplo: 2,4-6">
+          <div class="actions">
+            <button class="btn-primary" onclick="deletePagesPdf()">Eliminar</button>
+            <button class="btn-secondary" onclick="clearInput('deleteInput',null,'deleteStatus'); clearField('deletePages')">Limpiar</button>
+          </div>
+          <div class="status" id="deleteStatus"></div>
+        </div>
+
+        <div class="card">
+          <h3>Rotar PDF</h3>
+          <p>Rota todas las páginas del documento 90°, 180° o 270°.</p>
+          <div class="dropzone" data-input="rotateInput">
+            Sube un PDF
+            <input id="rotateInput" type="file" accept="application/pdf">
+          </div>
+          <select class="select" id="rotateDegrees">
+            <option value="90">90°</option>
+            <option value="180">180°</option>
+            <option value="270">270°</option>
+          </select>
+          <div class="actions">
+            <button class="btn-primary" onclick="rotatePDF()">Rotar</button>
+            <button class="btn-secondary" onclick="clearInput('rotateInput',null,'rotateStatus')">Limpiar</button>
+          </div>
+          <div class="status" id="rotateStatus"></div>
+        </div>
+
+        <div class="card">
+          <h3>JPG / PNG a PDF</h3>
+          <p>Convierte varias imágenes a un solo PDF en orden.</p>
+          <div class="dropzone" data-input="imgInput">
+            Arrastra imágenes aquí
+            <input id="imgInput" type="file" multiple accept="image/jpeg,image/png">
+          </div>
+          <ul class="file-list" id="imgList"></ul>
+          <div class="actions">
+            <button class="btn-primary" onclick="imagesToPDF()">Convertir</button>
+            <button class="btn-secondary" onclick="clearInput('imgInput','imgList','imgStatus')">Limpiar</button>
+          </div>
+          <div class="status" id="imgStatus"></div>
+        </div>
+
+        <div class="card">
+          <h3>PDF a texto</h3>
+          <p>Extrae el texto y descárgalo en un archivo TXT.</p>
+          <div class="dropzone" data-input="textInput">
+            Sube un PDF
+            <input id="textInput" type="file" accept="application/pdf">
+          </div>
+          <div class="actions">
+            <button class="btn-primary" onclick="pdfToText()">Extraer texto</button>
+            <button class="btn-secondary" onclick="clearInput('textInput',null,'textStatus')">Limpiar</button>
+          </div>
+          <div class="status" id="textStatus"></div>
+        </div>
+
+        <div class="card">
+          <h3>Optimizar PDF</h3>
+          <p>Reconstruye el archivo y a veces reduce el peso.</p>
+          <div class="dropzone" data-input="optInput">
+            Sube un PDF
+            <input id="optInput" type="file" accept="application/pdf">
+          </div>
+          <div class="tool-note">
+            Esta optimización es básica. Sin backend no reemplaza una compresión avanzada.
+          </div>
+          <div class="actions">
+            <button class="btn-primary" onclick="optimizePDF()">Optimizar</button>
+            <button class="btn-secondary" onclick="clearInput('optInput',null,'optStatus')">Limpiar</button>
+          </div>
+          <div class="status" id="optStatus"></div>
+        </div>
+
+        <div class="card">
+          <h3>Información del PDF</h3>
+          <p>Consulta cantidad de páginas y peso del archivo.</p>
+          <div class="dropzone" data-input="infoInput">
+            Sube un PDF
+            <input id="infoInput" type="file" accept="application/pdf">
+          </div>
+          <div class="actions">
+            <button class="btn-primary" onclick="pdfInfo()">Ver información</button>
+            <button class="btn-secondary" onclick="clearInput('infoInput',null,'infoStatus')">Limpiar</button>
+          </div>
+          <div class="status" id="infoStatus"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="section wrap" id="ventajas">
+      <h2>Por qué esta página es útil</h2>
+      <div class="info-grid">
+        <div class="info-box">
+          <strong>Todo en una sola web</strong>
+          <div class="mini">El usuario no tiene que entrar a otra página para cada acción.</div>
+        </div>
+        <div class="info-box">
+          <strong>Más privacidad</strong>
+          <div class="mini">Los archivos se procesan localmente en el navegador.</div>
+        </div>
+        <div class="info-box">
+          <strong>Base para SEO</strong>
+          <div class="mini">Tiene título, descripción y secciones útiles para posicionar mejor.</div>
+        </div>
+        <div class="info-box">
+          <strong>Lista para crecer</strong>
+          <div class="mini">Luego puedes añadir Word, Excel, OCR o backend cuando quieras escalar.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="faq">
+      <h2>Preguntas frecuentes</h2>
+      <div class="faq">
+        <details>
+          <summary>¿Mis archivos se suben a un servidor?</summary>
+          <p class="mini">No en esta versión. El procesamiento principal ocurre en tu navegador.</p>
+        </details>
+        <details>
+          <summary>¿Puedo convertir PDF a Word?</summary>
+          <p class="mini">No con buena calidad solo desde frontend. Para eso normalmente se necesita backend o una API externa.</p>
+        </details>
+        <details>
+          <summary>¿La compresión reduce mucho el peso?</summary>
+          <p class="mini">Puede reducir algo, pero no reemplaza un sistema avanzado de compresión del lado del servidor.</p>
+        </details>
+        <details>
+          <summary>¿Funciona en celular?</summary>
+          <p class="mini">Sí, aunque con archivos muy grandes puede ir mejor en laptop o PC.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-grid" id="contacto">
+      <div>
+        <strong>PDF Gratis Online</strong>
+        <div class="mini">
+          Herramientas PDF gratuitas para unir, dividir, convertir y optimizar documentos.
+        </div>
+      </div>
+      <div>
+        <strong>Privacidad</strong>
+        <div class="mini">
+          Esta web procesa archivos localmente siempre que sea posible.
+        </div>
+      </div>
+      <div>
+        <strong>Contacto</strong>
+        <div class="mini">
+          contacto@tusitio.com
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+    const { PDFDocument, degrees } = PDFLib;
+
+    function setStatus(id, message, type=""){
+      const el = document.getElementById(id);
+      el.className = "status" + (type ? " " + type : "");
+      el.textContent = message;
+    }
+
+    function clearField(id){
+      const el = document.getElementById(id);
+      if(el) el.value = "";
+    }
+
+    function clearInput(inputId, listId, statusId){
+      const input = document.getElementById(inputId);
+      if(input) input.value = "";
+      if(listId){
+        const list = document.getElementById(listId);
+        if(list) list.innerHTML = "";
+      }
+      if(statusId) setStatus(statusId, "");
+    }
+
+    function formatBytes(bytes){
+      const units = ["B","KB","MB","GB"];
+      let i = 0;
+      let n = bytes;
+      while(n >= 1024 && i < units.length-1){
+        n /= 1024;
+        i++;
+      }
+      return `${n.toFixed(n >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+    }
+
+    function downloadBlob(blob, name){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function updateFileList(inputId, listId){
+      const input = document.getElementById(inputId);
+      const list = document.getElementById(listId);
+      if(!input || !list) return;
+      list.innerHTML = "";
+      Array.from(input.files).forEach(file => {
+        const li = document.createElement("li");
+        li.textContent = `${file.name} — ${formatBytes(file.size)}`;
+        list.appendChild(li);
+      });
+    }
+
+    function parsePageRanges(input, totalPages){
+      const clean = input.replace(/\s+/g, "");
+      if(!clean) throw new Error("Ingresa páginas válidas.");
+      const parts = clean.split(",");
+      const pages = [];
+
+      for(const part of parts){
+        if(part.includes("-")){
+          const [a,b] = part.split("-").map(Number);
+          if(!a || !b || a < 1 || b < a) throw new Error("Rango inválido.");
+          for(let i=a; i<=b; i++){
+            if(i > totalPages) throw new Error(`La página ${i} no existe.`);
+            pages.push(i-1);
+          }
+        }else{
+          const p = Number(part);
+          if(!p || p < 1 || p > totalPages) throw new Error(`La página ${part} no existe.`);
+          pages.push(p-1);
+        }
+      }
+
+      return [...new Set(pages)];
+    }
+
+    async function mergePDFs(){
+      const input = document.getElementById("mergeInput");
+      const files = Array.from(input.files);
+      if(files.length < 2){
+        setStatus("mergeStatus", "Selecciona al menos 2 PDFs.", "error");
+        return;
+      }
+
+      try{
+        setStatus("mergeStatus", "Uniendo PDFs...");
+        const merged = await PDFDocument.create();
+
+        for(const file of files){
+          const bytes = await file.arrayBuffer();
+          const pdf = await PDFDocument.load(bytes);
+          const copied = await merged.copyPages(pdf, pdf.getPageIndices());
+          copied.forEach(page => merged.addPage(page));
+        }
+
+        const output = await merged.save();
+        downloadBlob(new Blob([output], {type:"application/pdf"}), "pdf-unido.pdf");
+        setStatus("mergeStatus", "PDF unido correctamente.", "success");
+      }catch(err){
+        setStatus("mergeStatus", "Error al unir PDFs: " + err.message, "error");
+      }
+    }
+
+    async function extractPagesPdf(){
+      const file = document.getElementById("extractInput").files[0];
+      const ranges = document.getElementById("extractPages").value;
+
+      if(!file){
+        setStatus("extractStatus", "Sube un PDF.", "error");
+        return;
+      }
+
+      try{
+        setStatus("extractStatus", "Extrayendo páginas...");
+        const src = await PDFDocument.load(await file.arrayBuffer());
+        const total = src.getPageCount();
+        const selected = parsePageRanges(ranges, total);
+
+        const out = await PDFDocument.create();
+        const copied = await out.copyPages(src, selected);
+        copied.forEach(p => out.addPage(p));
+
+        const bytes = await out.save();
+        downloadBlob(new Blob([bytes], {type:"application/pdf"}), "paginas-extraidas.pdf");
+        setStatus("extractStatus", "Páginas extraídas correctamente.", "success");
+      }catch(err){
+        setStatus("extractStatus", err.message, "error");
+      }
+    }
+
+    async function deletePagesPdf(){
+      const file = document.getElementById("deleteInput").files[0];
+      const ranges = document.getElementById("deletePages").value;
+
+      if(!file){
+        setStatus("deleteStatus", "Sube un PDF.", "error");
+        return;
+      }
+
+      try{
+        setStatus("deleteStatus", "Eliminando páginas...");
+        const src = await PDFDocument.load(await file.arrayBuffer());
+        const total = src.getPageCount();
+        const toDelete = new Set(parsePageRanges(ranges, total));
+        const keep = [];
+
+        for(let i=0; i<total; i++){
+          if(!toDelete.has(i)) keep.push(i);
+        }
+
+        if(keep.length === 0){
+          throw new Error("No puedes eliminar todas las páginas.");
+        }
+
+        const out = await PDFDocument.create();
+        const copied = await out.copyPages(src, keep);
+        copied.forEach(p => out.addPage(p));
+
+        const bytes = await out.save();
+        downloadBlob(new Blob([bytes], {type:"application/pdf"}), "pdf-sin-paginas.pdf");
+        setStatus("deleteStatus", "Páginas eliminadas correctamente.", "success");
+      }catch(err){
+        setStatus("deleteStatus", err.message, "error");
+      }
+    }
+
+    async function rotatePDF(){
+      const file = document.getElementById("rotateInput").files[0];
+      const deg = Number(document.getElementById("rotateDegrees").value);
+
+      if(!file){
+        setStatus("rotateStatus", "Sube un PDF.", "error");
+        return;
+      }
+
+      try{
+        setStatus("rotateStatus", "Rotando PDF...");
+        const pdf = await PDFDocument.load(await file.arrayBuffer());
+        const pages = pdf.getPages();
+        pages.forEach(page => page.setRotation(degrees(deg)));
+
+        const bytes = await pdf.save();
+        downloadBlob(new Blob([bytes], {type:"application/pdf"}), "pdf-rotado.pdf");
+        setStatus("rotateStatus", "PDF rotado correctamente.", "success");
+      }catch(err){
+        setStatus("rotateStatus", "Error al rotar PDF: " + err.message, "error");
+      }
+    }
+
+    async function imagesToPDF(){
+      const files = Array.from(document.getElementById("imgInput").files);
+      if(files.length === 0){
+        setStatus("imgStatus", "Sube al menos una imagen JPG o PNG.", "error");
+        return;
+      }
+
+      try{
+        setStatus("imgStatus", "Convirtiendo imágenes a PDF...");
+        const pdf = await PDFDocument.create();
+
+        for(const file of files){
+          const bytes = await file.arrayBuffer();
+          let img, dims;
+
+          if(file.type === "image/png"){
+            img = await pdf.embedPng(bytes);
+            dims = img.scale(1);
+          }else{
+            img = await pdf.embedJpg(bytes);
+            dims = img.scale(1);
+          }
+
+          const page = pdf.addPage([dims.width, dims.height]);
+          page.drawImage(img, {
+            x: 0,
+            y: 0,
+            width: dims.width,
+            height: dims.height
+          });
+        }
+
+        const out = await pdf.save();
+        downloadBlob(new Blob([out], {type:"application/pdf"}), "imagenes-a-pdf.pdf");
+        setStatus("imgStatus", "PDF creado correctamente.", "success");
+      }catch(err){
+        setStatus("imgStatus", "Error al convertir imágenes: " + err.message, "error");
+      }
+    }
+
+    async function pdfToText(){
+      const file = document.getElementById("textInput").files[0];
+      if(!file){
+        setStatus("textStatus", "Sube un PDF.", "error");
+        return;
+      }
+
+      try{
+        setStatus("textStatus", "Extrayendo texto...");
+        const buffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data: buffer}).promise;
+        let text = "";
+
+        for(let i = 1; i <= pdf.numPages; i++){
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items.map(item => item.str).join(" ");
+          text += `Página ${i}\n${pageText}\n\n`;
+        }
+
+        downloadBlob(new Blob([text], {type:"text/plain;charset=utf-8"}), "texto-extraido.txt");
+        setStatus("textStatus", "Texto extraído correctamente.", "success");
+      }catch(err){
+        setStatus("textStatus", "No se pudo extraer el texto.", "error");
+      }
+    }
+
+    async function optimizePDF(){
+      const file = document.getElementById("optInput").files[0];
+      if(!file){
+        setStatus("optStatus", "Sube un PDF.", "error");
+        return;
+      }
+
+      try{
+        setStatus("optStatus", "Optimizando PDF...");
+        const src = await PDFDocument.load(await file.arrayBuffer());
+        const out = await PDFDocument.create();
+        const copied = await out.copyPages(src, src.getPageIndices());
+        copied.forEach(p => out.addPage(p));
+
+        const before = file.size;
+        const bytes = await out.save({ useObjectStreams: true });
+        const after = bytes.length;
+
+        downloadBlob(new Blob([bytes], {type:"application/pdf"}), "pdf-optimizado.pdf");
+        setStatus("optStatus", `PDF procesado. Peso original: ${formatBytes(before)} | nuevo: ${formatBytes(after)}.`, "success");
+      }catch(err){
+        setStatus("optStatus", "Error al optimizar PDF: " + err.message, "error");
+      }
+    }
+
+    async function pdfInfo(){
+      const file = document.getElementById("infoInput").files[0];
+      if(!file){
+        setStatus("infoStatus", "Sube un PDF.", "error");
+        return;
+      }
+
+      try{
+        const pdf = await PDFDocument.load(await file.arrayBuffer());
+        const pages = pdf.getPageCount();
+        setStatus("infoStatus", `Nombre: ${file.name} | Peso: ${formatBytes(file.size)} | Páginas: ${pages}`, "success");
+      }catch(err){
+        setStatus("infoStatus", "No se pudo leer el PDF.", "error");
+      }
+    }
+
+    document.querySelectorAll(".dropzone").forEach(zone => {
+      const inputId = zone.dataset.input;
+      const input = document.getElementById(inputId);
+
+      ["dragenter","dragover"].forEach(evt => {
+        zone.addEventListener(evt, e => {
+          e.preventDefault();
+          zone.classList.add("dragover");
+        });
+      });
+
+      ["dragleave","drop"].forEach(evt => {
+        zone.addEventListener(evt, e => {
+          e.preventDefault();
+          zone.classList.remove("dragover");
+        });
+      });
+
+      zone.addEventListener("drop", e => {
+        const files = e.dataTransfer.files;
+        input.files = files;
+
+        if(inputId === "mergeInput") updateFileList("mergeInput","mergeList");
+        if(inputId === "imgInput") updateFileList("imgInput","imgList");
+      });
+
+      input.addEventListener("change", () => {
+        if(inputId === "mergeInput") updateFileList("mergeInput","mergeList");
+        if(inputId === "imgInput") updateFileList("imgInput","imgList");
+      });
+    });
+  </script>
 </body>
 </html>
