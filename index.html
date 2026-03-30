@@ -1,112 +1,175 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>PDF Gratis - Unir PDF Online</title>
+<meta charset="UTF-8">
+<title>PDF Tools Online Gratis</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      text-align: center;
-      padding: 40px;
-    }
+<style>
+body {
+  font-family: Arial;
+  background: #f5f7fa;
+  text-align: center;
+  padding: 30px;
+}
 
-    h1 {
-      font-size: 40px;
-    }
+h1 {
+  font-size: 35px;
+}
 
-    h2 {
-      color: #555;
-      margin-bottom: 30px;
-    }
+.container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
 
-    .box {
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      max-width: 400px;
-      margin: auto;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    }
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
 
-    input {
-      margin: 15px 0;
-    }
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  border-radius: 6px;
+}
 
-    button {
-      background: #ff4d4d;
-      color: white;
-      border: none;
-      padding: 12px 25px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
+button:hover {
+  background: #0056b3;
+}
 
-    button:hover {
-      background: #e60000;
-    }
-
-    .status {
-      margin-top: 15px;
-      color: green;
-    }
-  </style>
+.status {
+  margin-top: 10px;
+  color: green;
+}
+</style>
 </head>
 
 <body>
 
-  <h1>PDF GRATIS</h1>
-  <h2>Unir PDFs fácilmente</h2>
+<h1>PDF Tools Online Gratis</h1>
+<p>Unir, dividir y trabajar con PDF fácilmente</p>
 
-  <div class="box">
-    <input id="pdfInput" type="file" multiple accept="application/pdf"><br>
+<div class="container">
 
-    <button onclick="mergePDFs()">Unir PDF</button>
+<!-- UNIR PDF -->
+<div class="card">
+  <h3>Unir PDF</h3>
+  <input id="mergeInput" type="file" multiple accept="application/pdf"><br>
+  <button onclick="mergePDFs()">Unir PDF</button>
+  <p class="status" id="mergeStatus"></p>
+</div>
 
-    <p class="status" id="status"></p>
-  </div>
+<!-- DIVIDIR PDF -->
+<div class="card">
+  <h3>Dividir PDF</h3>
+  <input id="splitInput" type="file" accept="application/pdf"><br>
+  <input id="pages" placeholder="Ej: 1-2,4"><br>
+  <button onclick="splitPDF()">Dividir PDF</button>
+  <p class="status" id="splitStatus"></p>
+</div>
 
-  <p>Herramienta gratuita para unir archivos PDF online.</p>
+</div>
 
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
-  <script>
-    async function mergePDFs() {
-      const input = document.getElementById('pdfInput');
-      const status = document.getElementById('status');
-      const files = input.files;
+<script>
 
-      if (files.length < 2) {
-        alert("Selecciona al menos 2 PDFs");
-        return;
-      }
+// UNIR PDF
+async function mergePDFs() {
+  const files = document.getElementById("mergeInput").files;
+  const status = document.getElementById("mergeStatus");
 
-      status.innerText = "Procesando PDFs...";
+  if (files.length < 2) {
+    alert("Selecciona mínimo 2 PDFs");
+    return;
+  }
 
-      const mergedPdf = await PDFLib.PDFDocument.create();
+  status.innerText = "Procesando...";
 
-      for (let file of files) {
-        const bytes = await file.arrayBuffer();
-        const pdf = await PDFLib.PDFDocument.load(bytes);
-        const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-        pages.forEach(page => mergedPdf.addPage(page));
-      }
+  const mergedPdf = await PDFLib.PDFDocument.create();
 
-      const mergedBytes = await mergedPdf.save();
+  for (let file of files) {
+    const bytes = await file.arrayBuffer();
+    const pdf = await PDFLib.PDFDocument.load(bytes);
+    const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+    pages.forEach(p => mergedPdf.addPage(p));
+  }
 
-      const blob = new Blob([mergedBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+  const mergedBytes = await mergedPdf.save();
 
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = "pdf-unido.pdf";
-      a.click();
+  downloadFile(mergedBytes, "pdf-unido.pdf");
+  status.innerText = "✅ PDF unido";
+}
 
-      status.innerText = "✅ PDF unido correctamente";
+
+// DIVIDIR PDF
+async function splitPDF() {
+  const file = document.getElementById("splitInput").files[0];
+  const pagesInput = document.getElementById("pages").value;
+  const status = document.getElementById("splitStatus");
+
+  if (!file || !pagesInput) {
+    alert("Sube PDF y escribe páginas");
+    return;
+  }
+
+  status.innerText = "Procesando...";
+
+  const bytes = await file.arrayBuffer();
+  const pdf = await PDFLib.PDFDocument.load(bytes);
+  const newPdf = await PDFLib.PDFDocument.create();
+
+  let pages = parsePages(pagesInput);
+
+  const copied = await newPdf.copyPages(pdf, pages);
+  copied.forEach(p => newPdf.addPage(p));
+
+  const newBytes = await newPdf.save();
+
+  downloadFile(newBytes, "pdf-dividido.pdf");
+  status.innerText = "✅ PDF dividido";
+}
+
+
+// PARSEAR PAGINAS
+function parsePages(input) {
+  let result = [];
+  let parts = input.split(",");
+
+  parts.forEach(part => {
+    if (part.includes("-")) {
+      let [start, end] = part.split("-").map(Number);
+      for (let i = start; i <= end; i++) result.push(i - 1);
+    } else {
+      result.push(Number(part) - 1);
     }
-  </script>
+  });
+
+  return result;
+}
+
+
+// DESCARGAR
+function downloadFile(bytes, name) {
+  const blob = new Blob([bytes], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+}
+
+</script>
 
 </body>
 </html>
